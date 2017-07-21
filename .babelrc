@@ -1,0 +1,15 @@
+{
+  "env": {
+    "server": {
+      "presets": [
+        ["env", { "node": 4 }]
+      ]
+    },
+    "client": {
+      "presets": [
+        ["env", { "browsers": ["last 2 versions"] }],
+        "react"
+      ]
+    }
+  }
+}

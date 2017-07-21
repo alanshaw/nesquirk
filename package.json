@@ -1,0 +1,45 @@
+{
+  "name": "mes",
+  "version": "0.0.0",
+  "description": "Ties Nes + minimongo together for gloryful reactive apps.",
+  "main": "lib/server/index.js",
+  "browser": "lib/client/index.js",
+  "scripts": {
+    "build": "run-p build:*",
+    "build:server": "BABEL_ENV=server babel src/client --out-dir lib/client",
+    "build:client": "BABEL_ENV=client babel src/server --out-dir lib/server",
+    "watch": "run-p watch:*",
+    "watch:server": "npm run build:server -- --watch",
+    "watch:client": "npm run build:client -- --watch",
+    "test": "standard && tape test/*.test.js",
+    "clean": "rm -rf lib/**"
+  },
+  "keywords": [
+    "minimongo",
+    "nes",
+    "hapi",
+    "hapijs",
+    "websockets",
+    "reactive",
+    "react"
+  ],
+  "author": "Alan Shaw",
+  "license": "MIT",
+  "dependencies": {
+    "nes": "^6.4.3",
+    "react": "^15.6.1"
+  },
+  "devDependencies": {
+    "babel-cli": "^6.24.1",
+    "babel-preset-env": "^1.6.0",
+    "babel-preset-react": "^6.24.1",
+    "npm-run-all": "^4.0.2",
+    "standard": "^10.0.2",
+    "tape": "^4.7.0"
+  },
+  "standard": {
+    "ignore": [
+      "lib"
+    ]
+  }
+}
