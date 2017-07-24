@@ -32,11 +32,11 @@ server.mes.remove('/items', { _id: 5 }) // Note: needs _id in object(s) to delet
 ## Client
 
 ```js
-const Mes = require('mes')
-const client = new Mes.Client('ws://localhost')
+const { Client, Collection } = require('mes')
+const client = new Client('ws://localhost')
 
-// A minimongo collection
-const Items = Mes.collection('items')
+// A mingo backed minimongo collection
+const Items = new Collection('items')
 
 client.connect((err) => {
   // Hook the '/item/5' publication up to the Items collection
@@ -62,7 +62,7 @@ export default withClient(createContainer({
   },
   // Fetch any data from the minimongo store
   getData (props) {
-    return { items: Items.find() }
+    return { items: Items.find().all() }
   }
 }, MyComponent)))
 ```

@@ -1,4 +1,7 @@
 import { Client as NesClient } from 'nes'
+import EJSON from 'ejson'
+
+const MSG_TYPES = ['ready', 'added', 'updated', 'deleted']
 
 class Client {
   constructor (url, opts) {
@@ -6,81 +9,130 @@ class Client {
     this._subs = {}
   }
 
-  subscribe (path, Collection, cb) {
-    return this._retain(path, Collection)
+  subscribe (path, Collection, onReady) {
+    return this._retain(path, Collection, onReady)
   }
 
-  _isSubscribed (path, Collection) {
-    const subs = this._subs[path] || []
-    return subs.some((s) => s.Collection === Collection)
+  unsubscribe (path, Collection) {
+    return this._release(path, Collection)
   }
 
-  _createHandler (Collection) {
-    const handler = () => null
-    return handler
+  subscriptions () {
+    return Object.keys(this._subs)
   }
 
-  _retain (path, Collection) {
-    this._subs[path] = this._subs[path] || []
-
-    const subs = this._subs[path].slice()
-    const subIndex = subs.findIndex((s) => s.Collection === Collection)
-    let sub = subs[subIndex]
-
-    if (subIndex === -1) {
-      sub = {
-        path,
-        Collection,
-        handler: this._createHandler(Collection),
-        ready: false,
-        count: 1
-      }
-      subs.push(sub)
-    } else {
-      sub = { ...sub, count: sub.count + 1 }
-      subs[subIndex] = { ...sub, count: sub.count + 1 }
+  _createMessageHandler (path, Collection) {
+    return (message, flags) => {
+      const msgType = message.msg
+      if (!MSG_TYPES.includes(msgType)) return console.warn(`Invalid message type ${msgType}`)
+      const method = `_on${msgType[0].toUpperCase() + msgType.slice(1)}`
+      this[method](path, Collection, EJSON.parse(message.data))
     }
+  }
 
-    this._subs[path] = subs
-
-    const handler = this._createHandler(Collection)
-
-    this.nes.subscribe(path, handler, (err) => {
-      if (err) return cb(err)
-    })
-
-    this._subs[path] = (this._subs[path] || []).map((sub) => {
-      if (sub.Collection === Collection) {
-        return { ...sub, count: sub.count + 1 }
-      }
-      return sub
-    })
-
+  _createHandle (path, Collection) {
     return {
       isReady: () => this._isReady(path, Collection),
       stop: () => this.unsubscribe(path, Collection)
     }
   }
 
+  _retain (path, Collection, onReady) {
+    this._subs[path] = this._subs[path] || []
+    onReady = onReady || (() => 0)
+
+    const subs = Array.from(this._subs[path])
+    const subIndex = subs.findIndex((s) => s.Collection === Collection)
+
+    if (subIndex === -1) {
+      const handler = this._createMessageHandler(path, Collection)
+
+      subs.push({
+        path,
+        Collection,
+        handler,
+        ready: false,
+        onReady: onReady ? [onReady] : [],
+        count: 1
+      })
+
+      // TODO: handle subscribe error
+      this.nes.subscribe(path, handler, (err) => {
+        if (err) return console.error(`Failed to subscribe to ${path}`, err)
+      })
+    } else {
+      let sub = { ...subs[subIndex], count: subs[subIndex].count + 1 }
+
+      if (sub.ready) {
+        setTimeout(onReady)
+      } else {
+        sub.onReady = sub.onReady.concat(onReady)
+      }
+
+      subs[subIndex] = sub
+    }
+
+    this._subs[path] = subs
+
+    return this._createHandle(path, Collection)
+  }
+
   _release (path, Collection) {
     this._subs[path] = (this._subs[path] || []).reduce((subs, sub) => {
-      if (sub.Collection === Collection) {
-        if (sub.count === 1) {
-          // TODO: handle unsubscribe error
-          this.nes.unsubscribe(path, sub.handler, (err) => {
-            if (err) console.error(err)
-          })
-          return subs
-        }
-        return subs.concat({ ...sub, count: sub.count - 1 })
-      }
-      return subs.concat(sub)
+      if (sub.Collection !== Collection) return subs.concat(sub)
+
+      // More than one reference remains
+      if (sub.count > 1) return subs.concat({ ...sub, count: sub.count - 1 })
+
+      // Releasing last reference - unsubscribe from server
+      // TODO: handle unsubscribe error
+      this.nes.unsubscribe(path, sub.handler, (err) => {
+        if (err) return console.error(`Failed to unsubscribe from ${path}`, err)
+      })
+
+      return subs
     }, [])
   }
 
   _isReady (path, Collection) {
     const subs = this._subs[path] || []
     return subs.some((sub) => sub.Collection === Collection && sub.ready)
+  }
+
+  _onReady (path, Collection, data) {
+    let onReadyHandlers = []
+
+    this._subs[path] = (this._subs[path] || []).map((sub) => {
+      if (sub.Collection !== Collection) return sub
+      onReadyHandlers = sub.onReady
+      return { ...sub, ready: true, onReady: [] }
+    })
+
+    if (data) {
+      data = Array.isArray(data) ? data : []
+      data.forEach((d) => Collection.update({ _id: d._id }, { $set: d }, { upsert: true }))
+    }
+
+    onReadyHandlers.forEach((onReady) => onReady())
+  }
+
+  _onAdded (path, Collection, data) {
+    if (!data) return
+    data = Array.isArray(data) ? data : []
+    data.forEach((d) => Collection.update({ _id: d._id }, { $set: d }, { upsert: true }))
+  }
+
+  _onUpdated (path, Collection, data) {
+    if (!data) return
+    data = Array.isArray(data) ? data : []
+    data.forEach((d) => Collection.update({ _id: d._id }, { $set: d }, { upsert: true }))
+  }
+
+  _onRemoved (path, Collection, data) {
+    if (!data) return
+    data = Array.isArray(data) ? data : []
+    if (!data.length) return
+    Collection.remove({ _id: { $in: data.map((d) => d._id) } })
   }
 }
 
