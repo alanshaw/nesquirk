@@ -62,7 +62,7 @@ export class Server {
 
   remove (path, ids = [], opts) {
     ids = Array.isArray(ids) ? ids.map((id) => id.toString()) : ids.toString()
-    const data = JSON.stringify(ids)
+    const data = EJSON.stringify(ids)
     this._server.publish(path, { msg: 'removed', data }, opts)
     return this
   }
