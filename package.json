@@ -6,8 +6,8 @@
   "browser": "lib/client/index.js",
   "scripts": {
     "build": "run-p build:*",
-    "build:server": "BABEL_ENV=server babel src/client --out-dir lib/client",
-    "build:client": "BABEL_ENV=client babel src/server --out-dir lib/server",
+    "build:server": "BABEL_ENV=server babel src/server --out-dir lib/server",
+    "build:client": "BABEL_ENV=client babel src/client --out-dir lib/client",
     "watch": "run-p watch:*",
     "watch:server": "npm run build:server -- --watch",
     "watch:client": "npm run build:client -- --watch",
@@ -26,10 +26,13 @@
   "author": "Alan Shaw",
   "license": "MIT",
   "dependencies": {
+    "bson-objectid": "^1.1.5",
     "ejson": "^2.1.2",
+    "events": "^1.1.1",
+    "hoist-non-react-statics": "^2.2.1",
     "mingo": "^1.3.0",
     "nes": "^6.4.3",
-    "objectid": "^3.2.1",
+    "prop-types": "^15.5.10",
     "react": "^15.6.1"
   },
   "devDependencies": {
@@ -37,6 +40,7 @@
     "babel-eslint": "^7.2.3",
     "babel-preset-env": "^1.6.0",
     "babel-preset-react": "^6.24.1",
+    "babel-preset-stage-2": "^6.24.1",
     "npm-run-all": "^4.0.2",
     "standard": "^10.0.2",
     "tape": "^4.7.0"

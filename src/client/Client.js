@@ -5,8 +5,17 @@ const MSG_TYPES = ['ready', 'added', 'updated', 'deleted']
 
 class Client {
   constructor (url, opts) {
+    opts = opts || {}
     this.nes = opts.client || new NesClient(url, opts)
     this._subs = {}
+  }
+
+  connect () {
+    return this.nes.connect.apply(this.nes, arguments)
+  }
+
+  request () {
+    return this.nes.request.apply(this.nes, arguments)
   }
 
   subscribe (path, Collection, onReady) {
@@ -32,6 +41,8 @@ class Client {
 
   _createHandle (path, Collection) {
     return {
+      path,
+      Collection,
       isReady: () => this._isReady(path, Collection),
       stop: () => this.unsubscribe(path, Collection)
     }
@@ -109,7 +120,7 @@ class Client {
     })
 
     if (data) {
-      data = Array.isArray(data) ? data : []
+      data = Array.isArray(data) ? data : [data]
       data.forEach((d) => Collection.update({ _id: d._id }, { $set: d }, { upsert: true }))
     }
 
@@ -118,22 +129,22 @@ class Client {
 
   _onAdded (path, Collection, data) {
     if (!data) return
-    data = Array.isArray(data) ? data : []
+    data = Array.isArray(data) ? data : [data]
     data.forEach((d) => Collection.update({ _id: d._id }, { $set: d }, { upsert: true }))
   }
 
   _onUpdated (path, Collection, data) {
     if (!data) return
-    data = Array.isArray(data) ? data : []
+    data = Array.isArray(data) ? data : [data]
     data.forEach((d) => Collection.update({ _id: d._id }, { $set: d }, { upsert: true }))
   }
 
   _onRemoved (path, Collection, data) {
     if (!data) return
-    data = Array.isArray(data) ? data : []
+    data = Array.isArray(data) ? data : [data]
     if (!data.length) return
     Collection.remove({ _id: { $in: data.map((d) => d._id) } })
   }
 }
 
-export { Client }
+export default Client

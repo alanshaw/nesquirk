@@ -2,13 +2,15 @@
   "env": {
     "server": {
       "presets": [
-        ["env", { "node": 4 }]
+        ["env", { "node": 4 }],
+        "stage-2"
       ]
     },
     "client": {
       "presets": [
         ["env", { "browsers": ["last 2 versions"] }],
-        "react"
+        "react",
+        "stage-2"
       ]
     }
   }

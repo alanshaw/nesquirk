@@ -1,10 +1,11 @@
 import Mingo from 'mingo'
-import ObjectId from 'objectid'
+import ObjectID from 'bson-objectid'
 import EJSON from 'ejson'
+import { EventEmitter } from 'events'
 
-class Collection {
+class Collection extends EventEmitter {
   constructor (name) {
-    if (!(this instanceof Collection)) return new Collection(name)
+    super()
     this.name = name
     this._docs = []
   }
@@ -14,16 +15,18 @@ class Collection {
   }
 
   insert (doc) {
+    // console.log('Insert', doc)
     doc = EJSON.clone(doc)
-    doc._id = doc._id || ObjectId().toString()
+    doc._id = doc._id || ObjectID().toHexString()
     this._docs.push(doc)
+    this.emit('change')
     return doc._id
   }
 
   update (criteria, update, options) {
     options = options || {}
 
-    const modifiers = Object.keys(update)[0]
+    const modifiers = Object.keys(update)
 
     if (modifiers.length > 1 || modifiers[0] !== '$set') {
       throw new Error(`Unsupported modifier(s) ${modifiers.filter((m) => m !== '$set')}`)
@@ -54,11 +57,13 @@ class Collection {
       }
     } else {
       if (upsert) {
+        // console.log('Upsert', update.$set)
         this.insert(update.$set)
         nUpserted = 1
       }
     }
 
+    this.emit('change')
     return { nMatched, nModified, nUpserted }
   }
 
@@ -66,6 +71,7 @@ class Collection {
     const docs = Mingo.find(criteria).remove(this._docs)
     const nRemoved = this._docs.length - docs.length
     this._docs = docs
+    this.emit('change')
     return { nRemoved }
   }
 
@@ -74,4 +80,4 @@ class Collection {
   }
 }
 
-export { Collection }
+export default Collection

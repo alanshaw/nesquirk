@@ -7,7 +7,7 @@ export class Server {
 
   subscription (path, opts, onSubscribe) {
     if (!onSubscribe) {
-      opts = onSubscribe
+      onSubscribe = opts
       opts = {}
     }
 
@@ -16,12 +16,14 @@ export class Server {
     const _onSubscribe = opts.onSubscribe || ((socket, path, params, next) => next())
 
     opts.onSubscribe = (socket, path, params, next) => {
+      // console.log('onSubscribe', path, params)
+
       _onSubscribe(socket, path, params, (err) => {
         if (err) return next(err)
 
-        const onReady = (err) => {
+        const onReady = (err, data) => {
           if (err && err instanceof Error) return next(err)
-          const data = EJSON.stringify(err || [])
+          data = EJSON.stringify(this._stringifyObjectIds(err || data || []))
           socket.publish(path, { msg: 'ready', data }, next)
         }
 
@@ -38,18 +40,24 @@ export class Server {
     this._server.subscription(path, opts)
   }
 
+  _stringifyObjectIds (data) {
+    return Array.isArray(data)
+      ? data.map((d) => d && d._id ? { ...d, _id: d._id.toString() } : d)
+      : data && data._id ? { ...data, _id: data._id.toString() } : data
+  }
+
   add (path, data = [], opts) {
-    data = EJSON.stringify(data)
+    data = EJSON.stringify(this._stringifyObjectIds(data))
     this._server.publish(path, { msg: 'added', data }, opts)
   }
 
   update (path, data = [], opts) {
-    data = EJSON.stringify(data)
+    data = EJSON.stringify(this._stringifyObjectIds(data))
     this._server.publish(path, { msg: 'updated', data }, opts)
   }
 
   remove (path, data = [], opts) {
-    data = EJSON.stringify(data)
+    data = EJSON.stringify(this._stringifyObjectIds(data))
     this._server.publish(path, { msg: 'removed', data }, opts)
   }
 }
