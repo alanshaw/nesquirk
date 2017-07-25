@@ -43,25 +43,28 @@ class TodoList extends Component {
             <Link to='/add' className='btn btn-primary'>Add todo</Link>
           </div>
         </div>
-        {todos.length ? null : <p>No todos yet!</p>}
-        <ol className='list-group'>
-          {todos.map((todo) => (
-            <li key={todo._id} className={`list-group-item justify-content-between ${todo.done ? 'list-group-item-success' : ''}`}>
-              <div>
-                <label className='p-1 mr-2 mb-0' title={todo.done ? 'Not done?' : 'Done?'}>
-                  <input type='checkbox' checked={!!todo.done} onChange={this.onDoneChange} data-id={todo._id} />
-                </label>
-                <Link to={`/view/${todo._id}`}>{todo.title || 'Untitled'}</Link>
-              </div>
-              <div>
-                <Link to={`/edit/${todo._id}`} className='btn btn-secondary btn-sm mr-2'>Edit</Link>
-                <button type='button' className='btn btn-danger btn-sm' onClick={this.onRemoveClick} aria-label='Remove' data-id={todo._id}>
-                  <span aria-hidden='true'>&times;</span>
-                </button>
-              </div>
-            </li>
-          ))}
-        </ol>
+        {todos.length ? (
+          <ol className='list-group'>
+            {todos.map((todo) => (
+              <li key={todo._id} className={`list-group-item justify-content-between ${todo.done ? 'list-group-item-success' : ''}`}>
+                <div>
+                  <label className='p-1 mr-2 mb-0' title={todo.done ? 'Not done?' : 'Done?'}>
+                    <input type='checkbox' checked={!!todo.done} onChange={this.onDoneChange} data-id={todo._id} />
+                  </label>
+                  <Link to={`/view/${todo._id}`}>{todo.title || 'Untitled'}</Link>
+                </div>
+                <div>
+                  <Link to={`/edit/${todo._id}`} className='btn btn-secondary btn-sm mr-2'>Edit</Link>
+                  <button type='button' className='btn btn-danger btn-sm' onClick={this.onRemoveClick} aria-label='Remove' data-id={todo._id}>
+                    <span aria-hidden='true'>&times;</span>
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ol>
+        ) : (
+          <p>No todos yet!</p>
+        )}
       </div>
     )
   }
