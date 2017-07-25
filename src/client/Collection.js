@@ -68,7 +68,7 @@ class Collection extends EventEmitter {
   }
 
   remove (criteria) {
-    const docs = Mingo.find(criteria).remove(this._docs)
+    const docs = Mingo.remove(this._docs, criteria)
     const nRemoved = this._docs.length - docs.length
     this._docs = docs
     this.emit('change')

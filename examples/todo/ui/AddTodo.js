@@ -19,30 +19,36 @@ class AddTodo extends Component {
   onSubmit = (e) => {
     e.preventDefault()
 
+    const { title, description } = this.state
+    if (!title && !description) return
+
     this.props.client.request({
       path: '/todo',
       method: 'POST',
-      payload: this.state
+      payload: { title, description }
     }, (err) => {
       if (err) return console.error('Failed to add todo', err)
       this.props.history.push('/')
     })
   }
 
+  onCancelClick = () => this.props.history.push('/')
+
   render () {
     return (
       <form onSubmit={this.onSubmit}>
-        <h1>Add TODO</h1>
-        <div>
+        <h1 className='my-3'>Add TODO</h1>
+        <div className='form-group'>
           <label htmlFor='title'>Title</label>
-          <input name='title' onChange={this.onChange} value={this.state.title} />
+          <input className='form-control' name='title' onChange={this.onChange} value={this.state.title} />
         </div>
-        <div>
+        <div className='form-group'>
           <label htmlFor='description'>Description</label>
-          <textarea name='description' onChange={this.onChange} value={this.state.description} />
+          <textarea className='form-control' name='description' onChange={this.onChange} value={this.state.description} />
         </div>
-        <div>
-          <button type='submit'>Add</button>
+        <div className='form-group'>
+          <button type='submit' className='btn btn-success mr-1'>Add</button>
+          <button type='button' className='btn btn-link' onClick={this.onCancelClick}>Cancel</button>
         </div>
       </form>
     )

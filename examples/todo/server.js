@@ -2,39 +2,37 @@ const Path = require('path')
 const Hapi = require('hapi')
 const Inert = require('inert')
 const mongojs = require('mongojs')
-const ObjectId = mongojs.ObjectId
+const { ObjectId } = mongojs
+const _ = require('lodash')
 const Mes = require('../../lib/server')
 
 const server = new Hapi.Server()
 const db = mongojs('todo', ['todos'])
 
-server.connection({
-  host: 'localhost',
-  port: 3000
-})
+server.connection({ host: 'localhost', port: 3000 })
 
 server.register([Inert, Mes], (err) => {
   if (err) throw err
 
-  server.mes.subscription('/todos', (reply) => {
-    db.todos.find({}, { _id: 1, title: 1, createdAt: 1, done: 1 }, reply)
-  })
-
-  server.mes.subscription('/todo/{id}', ({ id }, reply) => {
-    db.todos.findOne({ _id: ObjectId(id) }, reply)
-  })
+  server.mes
+    .subscription('/todos', (reply) => {
+      db.todos.find({}, { _id: 1, title: 1, createdAt: 1, done: 1 }, reply)
+    })
+    .subscription('/todo/{todoId}', ({ todoId }, reply) => {
+      db.todos.findOne({ _id: ObjectId(todoId) }, reply)
+    })
 
   // Add
   server.route({
     method: 'POST',
     path: '/todo',
     handler (request, reply) {
-      db.todos.insert({
-        title: request.payload.title || '',
-        description: request.payload.description || '',
-        done: false,
-        createdAt: new Date()
-      }, (err, todo) => {
+      const data = Object.assign(
+        _.pick(request.payload, ['title', 'description']),
+        { done: false, createdAt: new Date() }
+      )
+
+      db.todos.insert(data, (err, todo) => {
         if (err) return reply(err)
         server.mes.add('/todos', todo)
         reply(todo)
@@ -45,22 +43,37 @@ server.register([Inert, Mes], (err) => {
   // Edit
   server.route({
     method: 'PATCH',
-    path: '/todo/{id}',
+    path: '/todo/{todoId}',
     handler (request, reply) {
-      const $set = {}
+      const todoId = ObjectId(request.params.todoId)
+      const data = _.pick(request.payload, ['title', 'description', 'done'])
 
-      if (request.payload.title != null) $set.title = request.payload.title
-      if (request.payload.description != null) $set.description = request.payload.description
-      if (request.payload.done != null) $set.done = request.payload.done
-
-      db.todos.update({ _id: ObjectId(request.params.id) }, { $set }, (err) => {
+      db.todos.update({ _id: todoId }, { $set: data }, (err) => {
         if (err) return reply(err)
-        db.todos.findOne({ _id: ObjectId(request.params.id) }, (err, todo) => {
+        db.todos.findOne({ _id: todoId }, (err, todo) => {
           if (err) return reply(err)
-          server.mes.update('/todos', todo)
-          server.mes.update(`/todo/${request.params.id}`, todo)
+          server.mes
+            .update('/todos', todo)
+            .update(`/todo/${todoId}`, todo)
           reply(todo)
         })
+      })
+    }
+  })
+
+  // Remove
+  server.route({
+    method: 'DELETE',
+    path: '/todo/{todoId}',
+    handler (request, reply) {
+      const todoId = ObjectId(request.params.todoId)
+
+      db.todos.remove({ _id: todoId }, (err) => {
+        if (err) return reply(err)
+        server.mes
+          .remove('/todos', todoId)
+          .remove(`/todo/${todoId}`, todoId)
+        reply().code(204)
       })
     }
   })

@@ -6,6 +6,7 @@ import { Client, Provider } from '../../../lib/client'
 import TodoList from './TodoList'
 import AddTodo from './AddTodo'
 import EditTodo from './EditTodo'
+import ViewTodo from './ViewTodo'
 
 // Setup the client connection
 const client = new Client('ws://localhost:3000')
@@ -14,10 +15,11 @@ client.connect((err) => { if (err) console.error('Failed to connect', err) })
 ReactDOM.render(
   <Provider client={client}>
     <Router>
-      <div>
+      <div className='container'>
         <Route exact path='/' component={TodoList} />
         <Route exact path='/add' component={AddTodo} />
         <Route exact path='/edit/:todoId' component={EditTodo} />
+        <Route exact path='/view/:todoId' component={ViewTodo} />
       </div>
     </Router>
   </Provider>,

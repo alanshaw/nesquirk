@@ -26,7 +26,7 @@ server.mes.update('/item/{_id}', { _id: 5, status: 'complete' })
 server.mes.add('/items', { _id: 5, status: 'complete' }) // alias for update?
 server.mes.add('/items', [/* ... */]) // Also pass arrays here
 server.mes.update('/items', { _id: 5, status: 'complete' }) // Note: needs _id in object(s) to merge
-server.mes.remove('/items', { _id: 5 }) // Note: needs _id in object(s) to delete
+server.mes.remove('/items', 5) // Note: only pass IDs
 ```
 
 ## Client

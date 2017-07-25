@@ -1,7 +1,7 @@
 import { Client as NesClient } from 'nes'
 import EJSON from 'ejson'
 
-const MSG_TYPES = ['ready', 'added', 'updated', 'deleted']
+const MSG_TYPES = ['ready', 'added', 'updated', 'removed']
 
 class Client {
   constructor (url, opts) {
@@ -139,11 +139,11 @@ class Client {
     data.forEach((d) => Collection.update({ _id: d._id }, { $set: d }, { upsert: true }))
   }
 
-  _onRemoved (path, Collection, data) {
-    if (!data) return
-    data = Array.isArray(data) ? data : [data]
-    if (!data.length) return
-    Collection.remove({ _id: { $in: data.map((d) => d._id) } })
+  _onRemoved (path, Collection, ids) {
+    if (!ids) return
+    ids = Array.isArray(ids) ? ids : [ids]
+    if (!ids.length) return
+    Collection.remove({ _id: { $in: ids } })
   }
 }
 

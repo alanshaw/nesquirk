@@ -5,8 +5,11 @@
   "main": "server.js",
   "scripts": {
     "start": "npm run build && node server.js",
-    "build": "npm run build:client",
+    "build": "run-p build:*",
     "build:client": "browserify ui/main.js -o public/bundle.js -t [ babelify ]",
+    "watch": "run-p watch:*",
+    "watch:client": "watchify ui/main.js -o public/bundle.js -t [ babelify ] -v",
+    "watch:serve": "nodemon server.js --ignore ui",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Alan Shaw",
@@ -14,6 +17,7 @@
   "dependencies": {
     "hapi": "^16.5.0",
     "inert": "^4.2.1",
+    "lodash": "^4.17.4",
     "mongojs": "^2.4.0",
     "prop-types": "^15.5.10",
     "react": "^15.6.1",
@@ -26,7 +30,10 @@
     "babel-preset-react": "^6.24.1",
     "babel-preset-stage-2": "^6.24.1",
     "babelify": "^7.3.0",
-    "standard": "^10.0.2"
+    "nodemon": "^1.11.0",
+    "npm-run-all": "^4.0.2",
+    "standard": "^10.0.2",
+    "watchify": "^3.9.0"
   },
   "standard": {
     "parser": "babel-eslint"

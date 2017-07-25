@@ -38,6 +38,8 @@ export class Server {
     }
 
     this._server.subscription(path, opts)
+
+    return this
   }
 
   _stringifyObjectIds (data) {
@@ -49,15 +51,19 @@ export class Server {
   add (path, data = [], opts) {
     data = EJSON.stringify(this._stringifyObjectIds(data))
     this._server.publish(path, { msg: 'added', data }, opts)
+    return this
   }
 
   update (path, data = [], opts) {
     data = EJSON.stringify(this._stringifyObjectIds(data))
     this._server.publish(path, { msg: 'updated', data }, opts)
+    return this
   }
 
-  remove (path, data = [], opts) {
-    data = EJSON.stringify(this._stringifyObjectIds(data))
+  remove (path, ids = [], opts) {
+    ids = Array.isArray(ids) ? ids.map((id) => id.toString()) : ids.toString()
+    const data = JSON.stringify(ids)
     this._server.publish(path, { msg: 'removed', data }, opts)
+    return this
   }
 }
