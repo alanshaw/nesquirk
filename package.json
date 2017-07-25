@@ -1,5 +1,5 @@
 {
-  "name": "mes",
+  "name": "nesquirk",
   "version": "0.0.0",
   "description": "Ties Nes + minimongo together for gloryful reactive apps.",
   "main": "lib/server/index.js",
@@ -16,6 +16,7 @@
   },
   "keywords": [
     "minimongo",
+    "mingo",
     "nes",
     "hapi",
     "hapijs",

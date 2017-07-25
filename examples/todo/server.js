@@ -4,17 +4,17 @@ const Inert = require('inert')
 const mongojs = require('mongojs')
 const { ObjectId } = mongojs
 const _ = require('lodash')
-const Mes = require('../../lib/server')
+const Nesquirk = require('../../lib/server')
 
 const server = new Hapi.Server()
 const db = mongojs('todo', ['todos'])
 
 server.connection({ host: 'localhost', port: 3000 })
 
-server.register([Inert, Mes], (err) => {
+server.register([Inert, Nesquirk], (err) => {
   if (err) throw err
 
-  server.mes
+  server.nq
     .subscription('/todos', (reply) => {
       db.todos.find({}, { _id: 1, title: 1, createdAt: 1, done: 1 }, reply)
     })
@@ -34,7 +34,7 @@ server.register([Inert, Mes], (err) => {
 
       db.todos.insert(data, (err, todo) => {
         if (err) return reply(err)
-        server.mes.add('/todos', todo)
+        server.nq.add('/todos', todo)
         reply(todo)
       })
     }
@@ -52,7 +52,7 @@ server.register([Inert, Mes], (err) => {
         if (err) return reply(err)
         db.todos.findOne({ _id: todoId }, (err, todo) => {
           if (err) return reply(err)
-          server.mes
+          server.nq
             .update('/todos', todo)
             .update(`/todo/${todoId}`, todo)
           reply(todo)
@@ -70,7 +70,7 @@ server.register([Inert, Mes], (err) => {
 
       db.todos.remove({ _id: todoId }, (err) => {
         if (err) return reply(err)
-        server.mes
+        server.nq
           .remove('/todos', todoId)
           .remove(`/todo/${todoId}`, todoId)
         reply().code(204)
