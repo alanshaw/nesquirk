@@ -12,7 +12,7 @@ class ViewTodo extends Component {
 
   constructor (props) {
     super(props)
-    this.state = props.todo
+    this.state = props.todo || {}
   }
 
   componentWillReceiveProps (nextProps) {
@@ -30,6 +30,8 @@ class ViewTodo extends Component {
 
   render () {
     const { _id, title, description, done, createdAt } = this.state
+    if (!_id) return null
+
     return (
       <div>
         <div className='my-3'>

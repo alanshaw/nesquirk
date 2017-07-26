@@ -52,7 +52,7 @@ class Client {
     this._subs[path] = this._subs[path] || []
     onReady = onReady || (() => 0)
 
-    const subs = Array.from(this._subs[path])
+    const subs = this._subs[path]
     const subIndex = subs.findIndex((s) => s.Collection === Collection)
 
     if (subIndex === -1) {
@@ -64,7 +64,8 @@ class Client {
         handler,
         ready: false,
         onReady: onReady ? [onReady] : [],
-        count: 1
+        count: 1,
+        ids: new Set()
       })
 
       // TODO: handle subscribe error
@@ -89,20 +90,37 @@ class Client {
   }
 
   _release (path, Collection) {
-    this._subs[path] = (this._subs[path] || []).reduce((subs, sub) => {
-      if (sub.Collection !== Collection) return subs.concat(sub)
+    const subs = this._subs[path]
+    const subIndex = (subs || []).findIndex((s) => s.Collection === Collection)
+    if (subIndex === -1) return console.warn(`Subcription not exists ${path} for ${Collection.name}`)
 
-      // More than one reference remains
-      if (sub.count > 1) return subs.concat({ ...sub, count: sub.count - 1 })
+    const sub = this._subs[path][subIndex]
 
-      // Releasing last reference - unsubscribe from server
-      // TODO: handle unsubscribe error
-      this.nes.unsubscribe(path, sub.handler, (err) => {
-        if (err) return console.error(`Failed to unsubscribe from ${path}`, err)
-      })
+    // More than one reference remains
+    if (sub.count > 1) {
+      sub.count--
+      return
+    }
 
-      return subs
-    }, [])
+    const removeIds = []
+
+    // Releasing last reference - remove unused docs
+    sub.ids.forEach((id) => {
+      const hasRef = subs.some((s) => s !== sub && sub.ids.has(id))
+      if (!hasRef) removeIds.push(id)
+    })
+
+    if (removeIds.length) {
+      Collection.remove({ _id: { $in: removeIds } })
+    }
+
+    // Releasing last reference - unsubscribe from server
+    // TODO: handle unsubscribe error
+    this.nes.unsubscribe(path, sub.handler, (err) => {
+      if (err) return console.error(`Failed to unsubscribe from ${path}`, err)
+    })
+
+    this._subs[path].splice(subIndex, 1)
   }
 
   _isReady (path, Collection) {
@@ -113,37 +131,69 @@ class Client {
   _onReady (path, Collection, data) {
     let onReadyHandlers = []
 
-    this._subs[path] = (this._subs[path] || []).map((sub) => {
-      if (sub.Collection !== Collection) return sub
-      onReadyHandlers = sub.onReady
-      return { ...sub, ready: true, onReady: [] }
-    })
+    const subIndex = (this._subs[path] || []).findIndex((s) => s.Collection === Collection)
+    if (subIndex === -1) return console.warn(`Subcription not exists ${path} for ${Collection.name}`)
+
+    const sub = this._subs[path][subIndex]
+
+    onReadyHandlers = sub.onReady
+
+    const ids = new Set()
 
     if (data) {
       data = Array.isArray(data) ? data : [data]
-      data.forEach((d) => Collection.update({ _id: d._id }, { $set: d }, { upsert: true }))
+      data.forEach((d) => {
+        Collection.update({ _id: d._id }, { $set: d }, { upsert: true })
+        ids.add(d._id)
+      })
     }
 
+    this._subs[path][subIndex] = { ...sub, ready: true, onReady: [], ids }
     onReadyHandlers.forEach((onReady) => onReady())
   }
 
   _onAdded (path, Collection, data) {
     if (!data) return
+
+    const subIndex = (this._subs[path] || []).findIndex((s) => s.Collection === Collection)
+    if (subIndex === -1) return console.warn(`Subcription not exists ${path} for ${Collection.name}`)
+
+    const sub = this._subs[path][subIndex]
+
     data = Array.isArray(data) ? data : [data]
-    data.forEach((d) => Collection.update({ _id: d._id }, { $set: d }, { upsert: true }))
+    data.forEach((d) => {
+      Collection.update({ _id: d._id }, { $set: d }, { upsert: true })
+      sub.ids.add(d._id)
+    })
   }
 
   _onUpdated (path, Collection, data) {
     if (!data) return
+
+    const subIndex = (this._subs[path] || []).findIndex((s) => s.Collection === Collection)
+    if (subIndex === -1) return console.warn(`Subcription not exists ${path} for ${Collection.name}`)
+
+    const sub = this._subs[path][subIndex]
+
     data = Array.isArray(data) ? data : [data]
-    data.forEach((d) => Collection.update({ _id: d._id }, { $set: d }, { upsert: true }))
+    data.forEach((d) => {
+      Collection.update({ _id: d._id }, { $set: d }, { upsert: true })
+      sub.ids.add(d._id)
+    })
   }
 
   _onRemoved (path, Collection, ids) {
     if (!ids) return
     ids = Array.isArray(ids) ? ids : [ids]
     if (!ids.length) return
+
+    const subIndex = (this._subs[path] || []).findIndex((s) => s.Collection === Collection)
+    if (subIndex === -1) return console.warn(`Subcription not exists ${path} for ${Collection.name}`)
+
+    const sub = this._subs[path][subIndex]
+
     Collection.remove({ _id: { $in: ids } })
+    ids.forEach((id) => sub.ids.delete(id))
   }
 }
 
