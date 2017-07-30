@@ -7,7 +7,8 @@ import Todos from './domain/Todos'
 class ViewTodo extends Component {
   static propTypes = {
     todo: PropTypes.object,
-    history: PropTypes.object.isRequired
+    history: PropTypes.object.isRequired,
+    loading: PropTypes.bool
   }
 
   constructor (props) {
@@ -29,8 +30,22 @@ class ViewTodo extends Component {
   onBackClick = () => this.props.history.push('/')
 
   render () {
+    const { loading } = this.props
     const { _id, title, description, done, createdAt } = this.state
     if (!_id) return null
+
+    if (loading) {
+      return (
+        <div>
+          <div className='my-3'>
+            <h1 className='mb-0 d-inline-block'>Loading...</h1>
+          </div>
+          <div>
+            <button type='button' className='btn btn-link' onClick={this.onBackClick}>Back</button>
+          </div>
+        </div>
+      )
+    }
 
     return (
       <div>
@@ -53,7 +68,10 @@ export default withRouter(withClient(createContainer({
   subscribe ({ client, match }) {
     return [client.subscribe(`/todo/${match.params.todoId}`, Todos)]
   },
-  getData ({ match }) {
-    return { todo: Todos.find({ _id: match.params.todoId }).first() }
+  getData ({ match }, subs) {
+    return {
+      todo: Todos.find({ _id: match.params.todoId }).first(),
+      loading: !subs.every((s) => s.isReady())
+    }
   }
 }, ViewTodo)))

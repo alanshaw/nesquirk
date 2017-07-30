@@ -23,29 +23,42 @@ export default function createContainer ({ subscribe, getData }, Comp) {
     }
 
     subscribe (props) {
-      this.setState({ data: getData(props) })
-
       let subs = subscribe(props) || []
       subs = Array.isArray(subs) ? subs : [subs]
 
       // Listen for changes for the collections that belongs to these subs
-      this.getCollections(subs).forEach((c) => c.on('change', this.onChange))
+      this.getCollections(subs).forEach((c) => {
+        c.on('change', this.onCollectionChange)
+      })
+
+      subs.forEach((s) => s.on('ready', this.onSubscriptionReady))
 
       this._subs = subs
+      this.setState({ data: getData(props, subs) })
     }
 
     resubscribe (props) {
       const prevSubs = this._subs
-      this.getCollections(prevSubs).forEach((c) => c.removeListener('change', this.onChange))
+      this.getCollections(prevSubs).forEach((c) => {
+        c.removeListener('change', this.onCollectionChange)
+      })
       this.subscribe(props)
-      prevSubs.forEach((s) => s.stop())
+      prevSubs.forEach((s) => {
+        s.removeListener('ready', this.onSubscriptionReady)
+        s.stop()
+      })
     }
 
     unsubscribe () {
       const subs = this._subs
-      this.getCollections(subs).forEach((c) => c.removeListener('change', this.onChange))
+      this.getCollections(subs).forEach((c) => {
+        c.removeListener('change', this.onCollectionChange)
+      })
       this._subs = []
-      subs.forEach((s) => s.stop())
+      subs.forEach((s) => {
+        s.removeListener('ready', this.onSubscriptionReady)
+        s.stop()
+      })
     }
 
     getCollections (subs) {
@@ -55,7 +68,8 @@ export default function createContainer ({ subscribe, getData }, Comp) {
       }, [])
     }
 
-    onChange = () => this.setState({ data: getData(this.props) })
+    onSubscriptionReady = () => this.setState({ data: getData(this.props, this._subs) })
+    onCollectionChange = () => this.setState({ data: getData(this.props, this._subs) })
 
     render () {
       const { props } = this

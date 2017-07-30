@@ -102,8 +102,12 @@ export default withClient(createContainer({
     return [ props.client.subscribe('/items', Items) ]
   },
   // Fetch any data from your collections
-  getData (props) {
-    return { items: Items.find().all() }
+  // Subs created in the `subscribe` function above are passed as the second arg
+  getData (props, subs) {
+    return {
+      items: Items.find().all(),
+      loading: !subs.every((s) => s.isReady())
+    }
   }
 }, MyComponent)))
 ```

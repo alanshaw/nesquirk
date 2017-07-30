@@ -1,13 +1,14 @@
 import Mingo from 'mingo'
 import ObjectID from 'bson-objectid'
 import EJSON from 'ejson'
-import { EventEmitter } from 'events'
+import EventEmitter from 'events'
 
 class Collection extends EventEmitter {
   constructor (name) {
     super()
     this.name = name
     this._docs = []
+    this.setMaxListeners(Infinity)
   }
 
   find (criteria, projection) {

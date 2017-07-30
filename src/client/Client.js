@@ -1,13 +1,16 @@
 import { Client as NesClient } from 'nes'
 import EJSON from 'ejson'
+import EventEmitter from 'events'
 
 const MSG_TYPES = ['ready', 'added', 'updated', 'removed']
 
-class Client {
+class Client extends EventEmitter {
   constructor (url, opts) {
+    super()
     opts = opts || {}
     this.nes = opts.client || new NesClient(url, opts)
     this._subs = {}
+    this.setMaxListeners(Infinity)
   }
 
   connect () {
@@ -40,12 +43,27 @@ class Client {
   }
 
   _createHandle (path, Collection) {
-    return {
-      path,
-      Collection,
-      isReady: () => this._isReady(path, Collection),
-      stop: () => this.unsubscribe(path, Collection)
+    const handle = new EventEmitter()
+
+    handle.path = path
+    handle.Collection = Collection
+    handle.isReady = () => this._isReady(path, Collection)
+
+    const onSubscriptionReady = (p, c) => {
+      if (p === path && c === Collection) {
+        this.removeListener('subscriptionready', onSubscriptionReady)
+        handle.emit('ready')
+      }
     }
+
+    handle.stop = () => {
+      this.removeListener('subscriptionready', onSubscriptionReady)
+      this.unsubscribe(path, Collection)
+    }
+
+    this.on('subscriptionready', onSubscriptionReady)
+
+    return handle
   }
 
   _retain (path, Collection, onReady) {
@@ -150,6 +168,7 @@ class Client {
 
     this._subs[path][subIndex] = { ...sub, ready: true, onReady: [], ids }
     onReadyHandlers.forEach((onReady) => onReady())
+    this.emit('subscriptionready', path, Collection)
   }
 
   _onAdded (path, Collection, data) {

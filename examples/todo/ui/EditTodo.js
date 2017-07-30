@@ -8,7 +8,8 @@ class EditTodo extends Component {
   static propTypes = {
     todo: PropTypes.object,
     client: PropTypes.object.isRequired,
-    history: PropTypes.object.isRequired
+    history: PropTypes.object.isRequired,
+    loading: PropTypes.bool
   }
 
   constructor (props) {
@@ -46,21 +47,28 @@ class EditTodo extends Component {
   onCancelClick = () => this.props.history.push('/')
 
   render () {
+    const { loading } = this.props
     return (
       <form onSubmit={this.onSubmit}>
         <h1 className='my-3'>Edit TODO</h1>
-        <div className='form-group'>
-          <label htmlFor='title'>Title</label>
-          <input className='form-control' name='title' onChange={this.onChange} value={this.state.title} />
-        </div>
-        <div className='form-group'>
-          <label htmlFor='description'>Description</label>
-          <textarea className='form-control' name='description' onChange={this.onChange} value={this.state.description} />
-        </div>
-        <div className='form-group'>
-          <button type='submit' className='btn btn-success mr-1'>Edit</button>
-          <button type='button' className='btn btn-link' onClick={this.onCancelClick}>Cancel</button>
-        </div>
+        {loading ? (
+          <p>Loading...</p>
+        ) : (
+          <div>
+            <div className='form-group'>
+              <label htmlFor='title'>Title</label>
+              <input className='form-control' name='title' onChange={this.onChange} value={this.state.title} />
+            </div>
+            <div className='form-group'>
+              <label htmlFor='description'>Description</label>
+              <textarea className='form-control' name='description' onChange={this.onChange} value={this.state.description} />
+            </div>
+            <div className='form-group'>
+              <button type='submit' className='btn btn-success mr-1'>Edit</button>
+              <button type='button' className='btn btn-link' onClick={this.onCancelClick}>Cancel</button>
+            </div>
+          </div>
+        )}
       </form>
     )
   }
@@ -70,7 +78,10 @@ export default withRouter(withClient(createContainer({
   subscribe ({ client, match }) {
     return [client.subscribe(`/todo/${match.params.todoId}`, Todos)]
   },
-  getData ({ match }) {
-    return { todo: Todos.find({ _id: match.params.todoId }).first() }
+  getData ({ match }, subs) {
+    return {
+      todo: Todos.find({ _id: match.params.todoId }).first(),
+      loading: !subs.every((s) => s.isReady())
+    }
   }
 }, EditTodo)))
