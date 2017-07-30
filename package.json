@@ -51,5 +51,17 @@
       "lib"
     ],
     "parser": "babel-eslint"
-  }
+  },
+  "directories": {
+    "example": "examples",
+    "lib": "lib"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alanshaw/nesquirk.git"
+  },
+  "bugs": {
+    "url": "https://github.com/alanshaw/nesquirk/issues"
+  },
+  "homepage": "https://github.com/alanshaw/nesquirk#readme"
 }
