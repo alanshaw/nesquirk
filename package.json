@@ -11,7 +11,7 @@
     "watch": "run-p watch:*",
     "watch:server": "npm run build:server -- --watch",
     "watch:client": "npm run build:client -- --watch",
-    "test": "standard && tape test/*.test.js",
+    "test": "standard && tape 'test/**/*.test.js'",
     "clean": "rm -rf lib/**"
   },
   "keywords": [
@@ -44,7 +44,7 @@
     "babel-preset-stage-2": "^6.24.1",
     "npm-run-all": "^4.0.2",
     "standard": "^10.0.2",
-    "tape": "^4.7.0"
+    "tape": "^4.8.0"
   },
   "standard": {
     "ignore": [

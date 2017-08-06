@@ -2,6 +2,7 @@ import Mingo from 'mingo'
 import ObjectID from 'bson-objectid'
 import EJSON from 'ejson'
 import EventEmitter from 'events'
+import { assign } from './object'
 
 class Collection extends EventEmitter {
   constructor (name) {
@@ -46,7 +47,7 @@ class Collection extends EventEmitter {
     if (nMatched) {
       const updateDoc = (doc) => {
         const index = this._docs.findIndex((d) => d._id === doc._id)
-        this._docs[index] = { ...EJSON.clone(doc), ...update.$set }
+        this._docs[index] = assign(doc, update.$set)
       }
 
       if (multi) {
@@ -59,7 +60,7 @@ class Collection extends EventEmitter {
     } else {
       if (upsert) {
         // console.log('Upsert', update.$set)
-        this.insert(update.$set)
+        this.insert(assign({}, update.$set))
         nUpserted = 1
       }
     }
