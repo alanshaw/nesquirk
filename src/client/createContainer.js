@@ -63,8 +63,8 @@ export default function createContainer ({ subscribe, getData }, Comp) {
 
     getCollections (subs) {
       return subs.reduce((collections, s) => {
-        if (collections.includes(s.Collection)) return collections
-        return collections.concat(s.Collection)
+        if (collections.includes(s.collection)) return collections
+        return collections.concat(s.collection)
       }, [])
     }
 

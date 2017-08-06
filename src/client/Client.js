@@ -21,36 +21,36 @@ class Client extends EventEmitter {
     return this.nes.request.apply(this.nes, arguments)
   }
 
-  subscribe (path, Collection, onReady) {
-    return this._retain(path, Collection, onReady)
+  subscribe (path, collection, onReady) {
+    return this._retain(path, collection, onReady)
   }
 
-  unsubscribe (path, Collection) {
-    return this._release(path, Collection)
+  unsubscribe (path, collection) {
+    return this._release(path, collection)
   }
 
   subscriptions () {
     return Object.keys(this._subs)
   }
 
-  _createMessageHandler (path, Collection) {
+  _createMessageHandler (path, collection) {
     return (message, flags) => {
       const msgType = message.msg
       if (!MSG_TYPES.includes(msgType)) return console.warn(`Invalid message type ${msgType}`)
       const method = `_on${msgType[0].toUpperCase() + msgType.slice(1)}`
-      this[method](path, Collection, EJSON.parse(message.data))
+      this[method](path, collection, EJSON.parse(message.data))
     }
   }
 
-  _createHandle (path, Collection) {
+  _createHandle (path, collection) {
     const handle = new EventEmitter()
 
     handle.path = path
-    handle.Collection = Collection
-    handle.isReady = () => this._isReady(path, Collection)
+    handle.collection = collection
+    handle.isReady = () => this._isReady(path, collection)
 
     const onSubscriptionReady = (p, c) => {
-      if (p === path && c === Collection) {
+      if (p === path && c === collection) {
         this.removeListener('subscriptionready', onSubscriptionReady)
         handle.emit('ready')
       }
@@ -58,7 +58,7 @@ class Client extends EventEmitter {
 
     handle.stop = () => {
       this.removeListener('subscriptionready', onSubscriptionReady)
-      this.unsubscribe(path, Collection)
+      this.unsubscribe(path, collection)
     }
 
     this.on('subscriptionready', onSubscriptionReady)
@@ -66,19 +66,19 @@ class Client extends EventEmitter {
     return handle
   }
 
-  _retain (path, Collection, onReady) {
+  _retain (path, collection, onReady) {
     this._subs[path] = this._subs[path] || []
     onReady = onReady || (() => 0)
 
     const subs = this._subs[path]
-    const subIndex = subs.findIndex((s) => s.Collection === Collection)
+    const subIndex = subs.findIndex((s) => s.collection === collection)
 
     if (subIndex === -1) {
-      const handler = this._createMessageHandler(path, Collection)
+      const handler = this._createMessageHandler(path, collection)
 
       subs.push({
         path,
-        Collection,
+        collection,
         handler,
         ready: false,
         onReady: onReady ? [onReady] : [],
@@ -104,13 +104,13 @@ class Client extends EventEmitter {
 
     this._subs[path] = subs
 
-    return this._createHandle(path, Collection)
+    return this._createHandle(path, collection)
   }
 
-  _release (path, Collection) {
+  _release (path, collection) {
     const subs = this._subs[path]
-    const subIndex = (subs || []).findIndex((s) => s.Collection === Collection)
-    if (subIndex === -1) return console.warn(`Subcription not exists ${path} for ${Collection.name}`)
+    const subIndex = (subs || []).findIndex((s) => s.collection === collection)
+    if (subIndex === -1) return console.warn(`Subcription not exists ${path} for ${collection.name}`)
 
     const sub = this._subs[path][subIndex]
 
@@ -129,7 +129,7 @@ class Client extends EventEmitter {
     })
 
     if (removeIds.length) {
-      Collection.remove({ _id: { $in: removeIds } })
+      collection.remove({ _id: { $in: removeIds } })
     }
 
     // Releasing last reference - unsubscribe from server
@@ -141,16 +141,16 @@ class Client extends EventEmitter {
     this._subs[path].splice(subIndex, 1)
   }
 
-  _isReady (path, Collection) {
+  _isReady (path, collection) {
     const subs = this._subs[path] || []
-    return subs.some((sub) => sub.Collection === Collection && sub.ready)
+    return subs.some((sub) => sub.collection === collection && sub.ready)
   }
 
-  _onReady (path, Collection, data) {
+  _onReady (path, collection, data) {
     let onReadyHandlers = []
 
-    const subIndex = (this._subs[path] || []).findIndex((s) => s.Collection === Collection)
-    if (subIndex === -1) return console.warn(`Subcription not exists ${path} for ${Collection.name}`)
+    const subIndex = (this._subs[path] || []).findIndex((s) => s.collection === collection)
+    if (subIndex === -1) return console.warn(`Subcription not exists ${path} for ${collection.name}`)
 
     const sub = this._subs[path][subIndex]
 
@@ -161,57 +161,57 @@ class Client extends EventEmitter {
     if (data) {
       data = Array.isArray(data) ? data : [data]
       data.forEach((d) => {
-        Collection.update({ _id: d._id }, { $set: d }, { upsert: true })
+        collection.update({ _id: d._id }, { $set: d }, { upsert: true })
         ids.add(d._id)
       })
     }
 
     this._subs[path][subIndex] = { ...sub, ready: true, onReady: [], ids }
     onReadyHandlers.forEach((onReady) => onReady())
-    this.emit('subscriptionready', path, Collection)
+    this.emit('subscriptionready', path, collection)
   }
 
-  _onAdded (path, Collection, data) {
+  _onAdded (path, collection, data) {
     if (!data) return
 
-    const subIndex = (this._subs[path] || []).findIndex((s) => s.Collection === Collection)
-    if (subIndex === -1) return console.warn(`Subcription not exists ${path} for ${Collection.name}`)
+    const subIndex = (this._subs[path] || []).findIndex((s) => s.collection === collection)
+    if (subIndex === -1) return console.warn(`Subcription not exists ${path} for ${collection.name}`)
 
     const sub = this._subs[path][subIndex]
 
     data = Array.isArray(data) ? data : [data]
     data.forEach((d) => {
-      Collection.update({ _id: d._id }, { $set: d }, { upsert: true })
+      collection.update({ _id: d._id }, { $set: d }, { upsert: true })
       sub.ids.add(d._id)
     })
   }
 
-  _onUpdated (path, Collection, data) {
+  _onUpdated (path, collection, data) {
     if (!data) return
 
-    const subIndex = (this._subs[path] || []).findIndex((s) => s.Collection === Collection)
-    if (subIndex === -1) return console.warn(`Subcription not exists ${path} for ${Collection.name}`)
+    const subIndex = (this._subs[path] || []).findIndex((s) => s.collection === collection)
+    if (subIndex === -1) return console.warn(`Subcription not exists ${path} for ${collection.name}`)
 
     const sub = this._subs[path][subIndex]
 
     data = Array.isArray(data) ? data : [data]
     data.forEach((d) => {
-      Collection.update({ _id: d._id }, { $set: d }, { upsert: true })
+      collection.update({ _id: d._id }, { $set: d }, { upsert: true })
       sub.ids.add(d._id)
     })
   }
 
-  _onRemoved (path, Collection, ids) {
+  _onRemoved (path, collection, ids) {
     if (!ids) return
     ids = Array.isArray(ids) ? ids : [ids]
     if (!ids.length) return
 
-    const subIndex = (this._subs[path] || []).findIndex((s) => s.Collection === Collection)
-    if (subIndex === -1) return console.warn(`Subcription not exists ${path} for ${Collection.name}`)
+    const subIndex = (this._subs[path] || []).findIndex((s) => s.collection === collection)
+    if (subIndex === -1) return console.warn(`Subcription not exists ${path} for ${collection.name}`)
 
     const sub = this._subs[path][subIndex]
 
-    Collection.remove({ _id: { $in: ids } })
+    collection.remove({ _id: { $in: ids } })
     ids.forEach((id) => sub.ids.delete(id))
   }
 }
