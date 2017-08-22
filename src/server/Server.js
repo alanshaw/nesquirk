@@ -1,5 +1,7 @@
 import EJSON from 'ejson'
 
+const filterYes = (path, message, options, next) => next(true)
+
 export class Server {
   constructor (server) {
     this._server = server
@@ -35,9 +37,24 @@ export class Server {
       })
     }
 
+    opts.filter = this._createFilter(opts.filter)
+
     this._server.subscription(path, opts)
 
     return this
+  }
+
+  _createFilter (filter) {
+    if (typeof filter === 'function') return filter
+
+    filter = ['ready', 'added', 'updated', 'removed'].reduce((f, type) => {
+      f[type] = filter[type] || filterYes
+      return f
+    }, {})
+
+    return (path, message, options, next) => {
+      filter[message.msg](path, message.data, options, next)
+    }
   }
 
   _stringifyObjectIds (data) {
