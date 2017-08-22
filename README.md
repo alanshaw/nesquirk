@@ -15,7 +15,7 @@ server.connection({ host: 'localhost', port: 3000 })
 server.register(Nesquirk, () => {
   // Declare a nesquirk subscription
   // opts are Nes server.subscription options
-  server.nq.subscription('/item/{_id}', opts, (params, reply) => {
+  server.nq.subscription('/item/{_id}', opts, (socket, path, params, reply) => {
     // Get your initial object, reply(obj)
   })
   // Behind the scenes, the callback is attached to opts.onSubscribe

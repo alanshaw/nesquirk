@@ -27,12 +27,10 @@ export class Server {
           socket.publish(path, { msg: 'ready', data }, next)
         }
 
-        if (!onSubscribe) return onReady()
-
-        if (Object.keys(params).length) {
-          onSubscribe(params, onReady)
+        if (onSubscribe) {
+          onSubscribe(socket, path, params, onReady)
         } else {
-          onSubscribe(onReady)
+          onReady()
         }
       })
     }

@@ -15,10 +15,10 @@ server.register([Inert, Nesquirk], (err) => {
   if (err) throw err
 
   server.nq
-    .subscription('/todos', (reply) => {
+    .subscription('/todos', (socket, path, params, reply) => {
       db.todos.find({}, { _id: 1, title: 1, createdAt: 1, done: 1 }, reply)
     })
-    .subscription('/todo/{todoId}', ({ todoId }, reply) => {
+    .subscription('/todo/{todoId}', (socket, path, { todoId }, reply) => {
       db.todos.findOne({ _id: ObjectId(todoId) }, reply)
     })
 
