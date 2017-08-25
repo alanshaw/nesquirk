@@ -47,7 +47,7 @@ class Client extends EventEmitter {
 
     handle.path = path
     handle.collection = collection
-    handle.isReady = () => this._isReady(path, collection)
+    handle.ready = () => this._isReady(path, collection)
 
     const onSubscriptionReady = (p, c) => {
       if (p === path && c === collection) {

@@ -1,7 +1,7 @@
 import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 import { Link } from 'react-router-dom'
-import { createContainer, withClient } from '../../../lib/client'
+import { createContainer } from '../../../lib/client'
 import Todos from './domain/Todos'
 
 class TodoList extends Component {
@@ -77,14 +77,10 @@ const List = ({ todos, onDoneChange, onRemoveClick }) => todos.length ? (
   <p>No todos yet!</p>
 )
 
-export default withClient(createContainer({
-  subscribe ({ client }) {
-    return [client.subscribe('/todos', Todos)]
-  },
-  getData (props, subs) {
-    return {
-      todos: Todos.find({}).sort({ createdAt: -1 }).all(),
-      loading: !subs.every((s) => s.isReady())
-    }
+export default createContainer(function (props, subs) {
+  const handle = this.subscribe('/todos', Todos)
+  return {
+    todos: Todos.find({}).sort({ createdAt: -1 }).all(),
+    loading: !handle.ready()
   }
-}, TodoList))
+}, TodoList)

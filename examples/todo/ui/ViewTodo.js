@@ -1,7 +1,7 @@
 import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 import { withRouter, Link } from 'react-router-dom'
-import { withClient, createContainer } from '../../../lib/client'
+import { createContainer } from '../../../lib/client'
 import Todos from './domain/Todos'
 
 class ViewTodo extends Component {
@@ -64,14 +64,11 @@ class ViewTodo extends Component {
   }
 }
 
-export default withRouter(withClient(createContainer({
-  subscribe ({ client, match }) {
-    return [client.subscribe(`/todo/${match.params.todoId}`, Todos)]
-  },
-  getData ({ match }, subs) {
-    return {
-      todo: Todos.find({ _id: match.params.todoId }).first(),
-      loading: !subs.every((s) => s.isReady())
-    }
+export default withRouter(createContainer(function ({ match }) {
+  const handle = this.subscribe(`/todo/${match.params.todoId}`, Todos)
+
+  return {
+    todo: Todos.find({ _id: match.params.todoId }).first(),
+    loading: !handle.ready()
   }
-}, ViewTodo)))
+}, ViewTodo))

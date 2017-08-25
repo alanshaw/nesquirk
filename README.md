@@ -90,26 +90,22 @@ ReactDOM.render(
 
 ```js
 import React from 'react'
-import { createContainer, withClient } from 'nesquirk'
+import { createContainer } from 'nesquirk'
 import Items from './Items'
 
 const MyComponent = ({ items }) => items.map((i) => <div>{i._id}</div>)
 
-export default withClient(createContainer({
+export default createContainer(function (props) {
   // Subscribe - will be auto unsubscribed on componentWillUnmount
-  subscribe (props) {
-    // Hook the Items collection up to the '/items' subscription
-    return [ props.client.subscribe('/items', Items) ]
-  },
+  // Hooks the Items collection up to the '/items' subscription
+  const handle = this.subscribe('/items', Items)
+
   // Fetch any data from your collections
-  // Subs created in the `subscribe` function above are passed as the second arg
-  getData (props, subs) {
-    return {
-      items: Items.find().all(),
-      loading: !subs.every((s) => s.isReady())
-    }
+  return {
+    items: Items.find().all(),
+    loading: !handle.ready()
   }
-}, MyComponent)))
+}, MyComponent))
 ```
 
 **Items.js**
