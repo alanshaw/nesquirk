@@ -48,7 +48,7 @@ export class Server {
     if (typeof filter === 'function') return filter
 
     filter = ['ready', 'added', 'updated', 'removed'].reduce((f, type) => {
-      f[type] = filter[type] || filterYes
+      f[type] = (filter && filter[type]) || filterYes
       return f
     }, {})
 
