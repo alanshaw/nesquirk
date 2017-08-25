@@ -53,7 +53,25 @@ export class Server {
     }, {})
 
     return (path, message, options, next) => {
-      filter[message.msg](path, message.data, options, next)
+      filter[message.msg](path, options.internal.__data, options, (isMatch, override) => {
+        if (!isMatch) return next(false, override)
+        if (override === undefined) return next(true)
+
+        // Otherwise we have to clone the message and stringify the overridden data
+        const msg = { ...message }
+
+        if (message.msg === 'removed') {
+          override = Array.isArray(override)
+            ? override.map((id) => id.toString())
+            : override.toString()
+        } else {
+          override = this._stringifyObjectIds(override)
+        }
+
+        msg.data = EJSON.stringify(override)
+
+        next(true, msg)
+      })
     }
   }
 
@@ -64,21 +82,36 @@ export class Server {
   }
 
   add (path, data = [], opts) {
+    opts = opts || {}
+    opts.internal = opts.internal || {}
+    opts.internal.__data = data
+
     data = EJSON.stringify(this._stringifyObjectIds(data))
     this._server.publish(path, { msg: 'added', data }, opts)
+
     return this
   }
 
   update (path, data = [], opts) {
+    opts = opts || {}
+    opts.internal = opts.internal || {}
+    opts.internal.__data = data
+
     data = EJSON.stringify(this._stringifyObjectIds(data))
     this._server.publish(path, { msg: 'updated', data }, opts)
+
     return this
   }
 
   remove (path, ids = [], opts) {
+    opts = opts || {}
+    opts.internal = opts.internal || {}
+    opts.internal.__data = ids
+
     ids = Array.isArray(ids) ? ids.map((id) => id.toString()) : ids.toString()
     const data = EJSON.stringify(ids)
     this._server.publish(path, { msg: 'removed', data }, opts)
+
     return this
   }
 }
