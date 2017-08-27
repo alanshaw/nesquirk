@@ -100,7 +100,7 @@ class TodoListContainer extends Component {
   }
 }
 
-export default createContainer(function (props, subs) {
+export default createContainer(function (props) {
   const handle = this.subscribe('/todos', Todos)
   return {
     todos: Todos.find({}).sort({ createdAt: -1 }).all(),
