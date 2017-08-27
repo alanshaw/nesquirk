@@ -1,38 +1,22 @@
 import React, { Component } from 'react'
 import PropTypes from 'prop-types'
-import { withRouter, Link } from 'react-router-dom'
-import { createContainer } from '../../../lib/client'
+import { withRouter } from 'react-router-dom'
+import { createContainer } from 'nesquirk'
 import Todos from './domain/Todos'
 
 class ViewTodo extends Component {
   static propTypes = {
     todo: PropTypes.object,
-    history: PropTypes.object.isRequired,
+    onEdit: PropTypes.func.isRequired,
+    onBack: PropTypes.func.isRequired,
     loading: PropTypes.bool
   }
 
-  constructor (props) {
-    super(props)
-    this.state = props.todo || {}
-  }
-
-  componentWillReceiveProps (nextProps) {
-    if (nextProps.todo) {
-      this.setState({ ...nextProps.todo })
-    }
-  }
-
-  onChange = (e) => {
-    const name = e.target.getAttribute('name')
-    this.setState({ [name]: e.target.value })
-  }
-
-  onBackClick = () => this.props.history.push('/')
+  onEditClick = () => this.props.onEdit(this.props.todo._id)
+  onBackClick = () => this.props.onBack()
 
   render () {
-    const { loading } = this.props
-    const { _id, title, description, done, createdAt } = this.state
-    if (!_id) return null
+    const { loading, todo } = this.props
 
     if (loading) {
       return (
@@ -47,6 +31,10 @@ class ViewTodo extends Component {
       )
     }
 
+    if (!todo) return null
+
+    const { title, description, done, createdAt } = todo
+
     return (
       <div>
         <div className='my-3'>
@@ -56,11 +44,27 @@ class ViewTodo extends Component {
         <p className='text-muted'>{createdAt.toString()}</p>
         {description ? <p>{description}</p> : null}
         <div>
-          <Link to={`/edit/${_id}`} className='btn btn-secondary mr-2'>Edit</Link>
+          <button type='button' className='btn btn-secondary mr-2' onClick={this.onEditClick}>Edit</button>
           <button type='button' className='btn btn-link' onClick={this.onBackClick}>Back</button>
         </div>
       </div>
     )
+  }
+}
+
+class ViewTodoContainer extends Component {
+  static propTypes = {
+    todo: PropTypes.object,
+    history: PropTypes.object.isRequired,
+    loading: PropTypes.bool
+  }
+
+  onEdit = (todoId) => this.props.history.push(`/edit/${todoId}`)
+  onBack = () => this.props.history.push('/')
+
+  render () {
+    const { todo, loading } = this.props
+    return <ViewTodo todo={todo} onBack={this.onBack} loading={loading} />
   }
 }
 
@@ -71,4 +75,4 @@ export default withRouter(createContainer(function ({ match }) {
     todo: Todos.find({ _id: match.params.todoId }).first(),
     loading: !handle.ready()
   }
-}, ViewTodo))
+}, ViewTodoContainer))

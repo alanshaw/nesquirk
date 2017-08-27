@@ -1,14 +1,14 @@
 import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 import { withRouter } from 'react-router-dom'
-import { createContainer } from '../../../lib/client'
+import { createContainer } from 'nesquirk'
 import Todos from './domain/Todos'
 
 class EditTodo extends Component {
   static propTypes = {
     todo: PropTypes.object,
-    client: PropTypes.object.isRequired,
-    history: PropTypes.object.isRequired,
+    onEdit: PropTypes.func.isRequired,
+    onCancel: PropTypes.func.isRequired,
     loading: PropTypes.bool
   }
 
@@ -34,17 +34,10 @@ class EditTodo extends Component {
     const { title, description } = this.state
     if (!title && !description) return
 
-    this.props.client.request({
-      path: `/todo/${this.state._id}`,
-      method: 'PATCH',
-      payload: { title, description }
-    }, (err) => {
-      if (err) return console.error('Failed to edit todo', err)
-      this.props.history.push('/')
-    })
+    this.props.onEdit(this.props.todo._id, { title, description })
   }
 
-  onCancelClick = () => this.props.history.push('/')
+  onCancelClick = () => this.props.onCancel()
 
   render () {
     const { loading } = this.props
@@ -74,6 +67,34 @@ class EditTodo extends Component {
   }
 }
 
+class EditTodoContainer extends Component {
+  static propTypes = {
+    todo: PropTypes.object,
+    client: PropTypes.object.isRequired,
+    history: PropTypes.object.isRequired,
+    loading: PropTypes.bool
+  }
+
+  onEdit = (todoId, data) => {
+    this.props.client.request({
+      path: `/todo/${todoId}`,
+      method: 'PATCH',
+      payload: data
+    }, (err) => {
+      if (err) return console.error('Failed to edit todo', err)
+      this.props.history.push('/')
+    })
+  }
+
+  onCancel = () => this.props.history.push('/')
+
+  render () {
+    const { onEdit, onCancel } = this
+    const { todo, loading } = this.props
+    return <EditTodo todo={todo} onEdit={onEdit} onCancel={onCancel} loading={loading} />
+  }
+}
+
 export default withRouter(createContainer(function ({ match }) {
   const handle = this.subscribe(`/todo/${match.params.todoId}`, Todos)
 
@@ -81,4 +102,4 @@ export default withRouter(createContainer(function ({ match }) {
     todo: Todos.find({ _id: match.params.todoId }).first(),
     loading: !handle.ready()
   }
-}, EditTodo))
+}, EditTodoContainer))

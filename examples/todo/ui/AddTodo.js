@@ -1,12 +1,12 @@
 import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 import { withRouter } from 'react-router-dom'
-import { withClient } from '../../../lib/client'
+import { withClient } from 'nesquirk'
 
-class AddTodo extends Component {
+export class AddTodo extends Component {
   static propTypes = {
-    client: PropTypes.object.isRequired,
-    history: PropTypes.object.isRequired
+    onAdd: PropTypes.func.isRequired,
+    onCancel: PropTypes.func.isRequired
   }
 
   state = { title: '', description: '' }
@@ -22,17 +22,10 @@ class AddTodo extends Component {
     const { title, description } = this.state
     if (!title && !description) return
 
-    this.props.client.request({
-      path: '/todo',
-      method: 'POST',
-      payload: { title, description }
-    }, (err) => {
-      if (err) return console.error('Failed to add todo', err)
-      this.props.history.push('/')
-    })
+    this.props.onAdd({ title, description })
   }
 
-  onCancelClick = () => this.props.history.push('/')
+  onCancelClick = () => this.props.onCancel()
 
   render () {
     return (
@@ -55,4 +48,28 @@ class AddTodo extends Component {
   }
 }
 
-export default withRouter(withClient(AddTodo))
+class AddTodoContainer extends Component {
+  static propTypes = {
+    client: PropTypes.object.isRequired,
+    history: PropTypes.object.isRequired
+  }
+
+  onAdd = (data) => {
+    this.props.client.request({
+      path: '/todo',
+      method: 'POST',
+      payload: data
+    }, (err) => {
+      if (err) return console.error('Failed to add todo', err)
+      this.props.history.push('/')
+    })
+  }
+
+  onCancel = () => this.props.history.push('/')
+
+  render () {
+    return <AddTodo onAdd={this.onAdd} onCancel={this.onCancel} />
+  }
+}
+
+export default withRouter(withClient(AddTodoContainer))

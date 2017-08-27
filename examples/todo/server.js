@@ -4,7 +4,7 @@ const Inert = require('inert')
 const mongojs = require('mongojs')
 const { ObjectId } = mongojs
 const _ = require('lodash')
-const Nesquirk = require('../../lib/server')
+const Nesquirk = require('nesquirk')
 
 const server = new Hapi.Server()
 const db = mongojs('todo', ['todos'])

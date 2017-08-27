@@ -1,3 +1,3 @@
-import { Collection } from '../../../../lib/client'
+import { Collection } from 'nesquirk'
 
 export default new Collection('todos')

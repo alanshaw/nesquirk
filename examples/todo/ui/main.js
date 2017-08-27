@@ -1,7 +1,7 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
 import { BrowserRouter as Router, Route } from 'react-router-dom'
-import { Client, Provider } from '../../../lib/client'
+import { Client, Provider } from 'nesquirk'
 
 import TodoList from './TodoList'
 import AddTodo from './AddTodo'
