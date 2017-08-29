@@ -1,6 +1,5 @@
 import React, { Component } from 'react'
 import PropTypes from 'prop-types'
-import withClient from './withClient'
 
 const noData = () => ({})
 
@@ -15,26 +14,26 @@ export default function createContainer (getData, opts, Comp) {
   const clientKey = opts.clientKey || 'client'
 
   class Container extends Component {
-    static propTypes = {
+    static contextTypes = {
       [clientKey]: PropTypes.object.isRequired
     }
 
     state = { data: {} }
 
     componentWillMount () {
-      this.subscribe(this.props)
+      this.subscribe(this.props, this.context)
     }
 
-    componentWillReceiveProps (nextProps) {
-      this.resubscribe(nextProps)
+    componentWillReceiveProps (nextProps, nextContext) {
+      this.resubscribe(nextProps, nextContext)
     }
 
     componentWillUnmount () {
       this.unsubscribe()
     }
 
-    subscribe (props) {
-      const client = opts.client || props[clientKey]
+    subscribe (props, context) {
+      const client = opts.client || context[clientKey]
       const subs = []
 
       const ctx = {
@@ -58,14 +57,14 @@ export default function createContainer (getData, opts, Comp) {
       this.setState({ data })
     }
 
-    resubscribe (props) {
+    resubscribe (props, context) {
       const prevSubs = this._subs
 
       this.getCollections(prevSubs).forEach((c) => {
         c.removeListener('change', this.onCollectionChange)
       })
 
-      this.subscribe(props)
+      this.subscribe(props, context)
 
       prevSubs.forEach((s) => {
         s.removeListener('ready', this.onSubscriptionReady)
@@ -101,5 +100,5 @@ export default function createContainer (getData, opts, Comp) {
     }
   }
 
-  return withClient(Container)
+  return Container
 }
