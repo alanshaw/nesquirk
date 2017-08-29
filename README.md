@@ -1,4 +1,4 @@
-# Nesquirk
+# Nesquirk [![Build Status](https://travis-ci.org/alanshaw/nesquirk.svg?branch=master)](https://travis-ci.org/alanshaw/nesquirk) [![dependencies Status](https://david-dm.org/alanshaw/nesquirk/status.svg)](https://david-dm.org/alanshaw/nesquirk)
 
 Ties [Nes](https://github.com/hapijs/nes) + [minimongo](https://github.com/kofrasa/mingo) together for gloryful reactive apps.
 
