@@ -12,10 +12,11 @@ export default function createContainer (getData, opts, Comp) {
 
   opts = opts || {}
   getData = getData || noData
+  const clientKey = opts.clientKey || 'client'
 
   class Container extends Component {
     static propTypes = {
-      client: PropTypes.object.isRequired
+      [clientKey]: PropTypes.object.isRequired
     }
 
     state = { data: {} }
@@ -33,7 +34,7 @@ export default function createContainer (getData, opts, Comp) {
     }
 
     subscribe (props) {
-      const client = opts.client || props.client
+      const client = opts.client || props[clientKey]
       const subs = []
 
       const ctx = {
