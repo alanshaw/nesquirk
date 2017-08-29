@@ -64,7 +64,7 @@ class ViewTodoContainer extends Component {
 
   render () {
     const { todo, loading } = this.props
-    return <ViewTodo todo={todo} onBack={this.onBack} loading={loading} />
+    return <ViewTodo todo={todo} onEdit={this.onEdit} onBack={this.onBack} loading={loading} />
   }
 }
 
