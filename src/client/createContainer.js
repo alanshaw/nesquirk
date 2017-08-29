@@ -33,7 +33,7 @@ export default function createContainer (getData, opts, Comp) {
     }
 
     subscribe (props) {
-      const client = opts.client || this.props.client
+      const client = opts.client || props.client
       const subs = []
 
       const ctx = {
