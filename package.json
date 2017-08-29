@@ -1,6 +1,6 @@
 {
   "name": "nesquirk",
-  "version": "3.0.0",
+  "version": "4.0.0",
   "description": "Ties Nes + minimongo together for gloryful reactive apps.",
   "main": "lib/server/index.js",
   "browser": "lib/client/index.js",
