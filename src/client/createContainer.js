@@ -91,8 +91,8 @@ export default function createContainer (getData, opts, Comp) {
       }, [])
     }
 
-    onSubscriptionReady = () => this.resubscribe(this.props)
-    onCollectionChange = () => this.resubscribe(this.props)
+    onSubscriptionReady = () => this.resubscribe(this.props, this.context)
+    onCollectionChange = () => this.resubscribe(this.props, this.context)
 
     render () {
       const { props } = this
