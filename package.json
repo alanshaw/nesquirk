@@ -11,7 +11,10 @@
     "watch": "run-p watch:*",
     "watch:server": "npm run build:server -- --watch",
     "watch:client": "npm run build:client -- --watch",
-    "test": "standard && tape 'test/**/*.test.js'",
+    "test": "run-s build test:*",
+    "test:lint": "run-s lint",
+    "test:functional": "tape 'test/**/*.test.js'",
+    "lint": "standard",
     "clean": "rm -rf lib/**"
   },
   "keywords": [
